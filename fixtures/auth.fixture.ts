@@ -25,17 +25,23 @@ export const test = base.extend<AuthFixtures, AuthWorkerFixtures>({
   authenticatedContext: [
     async ({ browser }, use) => {
       const context = await browser.newContext();
-      const page = await context.newPage();
+      // If registration fails, context.close() below is never reached (it's after use()),
+      // leaking the context for the rest of the worker's life. The try/finally guarantees
+      // cleanup either way.
+      try {
+        const page = await context.newPage();
 
-      const id = randomUUID();
-      const registerPage = new RegisterPage(page);
-      await registerPage.goto();
-      await registerPage.register(`qa.${id}@example.com`, `qa-${id}`, WORKER_ACCOUNT_PASSWORD);
-      await registerPage.expectRegistered();
-      await page.close();
+        const id = randomUUID();
+        const registerPage = new RegisterPage(page);
+        await registerPage.goto();
+        await registerPage.register(`qa.${id}@example.com`, `qa-${id}`, WORKER_ACCOUNT_PASSWORD);
+        await registerPage.expectRegistered();
+        await page.close();
 
-      await use(context);
-      await context.close();
+        await use(context);
+      } finally {
+        await context.close();
+      }
     },
     { scope: 'worker' },
   ],

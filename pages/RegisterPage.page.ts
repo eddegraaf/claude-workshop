@@ -1,7 +1,7 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { BasePage } from './BasePage.page';
 
-export class RegisterPage {
-  private readonly page: Page;
+export class RegisterPage extends BasePage {
   private readonly emailInput: Locator;
   private readonly usernameInput: Locator;
   private readonly passwordInput: Locator;
@@ -10,7 +10,7 @@ export class RegisterPage {
   private readonly loggedOutLink: Locator;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
     this.emailInput = page.getByRole('textbox', { name: 'Email *' });
     this.usernameInput = page.getByRole('textbox', { name: 'Username *' });
     this.passwordInput = page.getByRole('textbox', { name: 'Password *', exact: true });
@@ -20,7 +20,7 @@ export class RegisterPage {
   }
 
   async goto(): Promise<void> {
-    await this.page.goto('/register', { waitUntil: 'domcontentloaded' });
+    await this.navigate('/register');
   }
 
   async register(email: string, username: string, password: string): Promise<void> {

@@ -19,8 +19,9 @@ test('adds two products to the cart and totals them correctly', async ({ authent
   const productPage = new ProductPage(authenticatedPage);
   const cartPage = new CartPage(authenticatedPage);
 
-  // The shared test account's cart may already hold items from other runs; start clean
-  // so the total assertion below isn't polluted by unrelated leftovers.
+  // Each worker registers its own account (see fixtures/auth.fixture.ts), but repeated runs
+  // within the same worker reuse it, so its cart may already hold items from a prior run;
+  // start clean so the total assertion below isn't polluted by leftovers.
   await cartPage.goto();
   await cartPage.clear();
 
