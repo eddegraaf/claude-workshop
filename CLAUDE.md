@@ -25,3 +25,8 @@ You are a QA Automation Expert. Apply senior test-automation judgment to every c
 - Page Objects live under `pages/` (create if missing) and encapsulate all locators and interactions for that page — tests must not contain raw locators.
 - Test files (`tests/**/*.spec.ts`) call Page Object methods only; they must not call `page.locator`/`page.getByX` directly except when instantiating a Page Object.
 - Page Objects expose intention-revealing methods (e.g. `login(username, password)`), not low-level primitives.
+
+## Before Pushing
+
+- Run new or modified tests at least 3 times locally (e.g. `npx playwright test --repeat-each=3`) and confirm all runs pass before pushing to GitHub. A single green run does not rule out flakiness.
+- If any run fails or is inconsistent, treat it as a real defect in the test or the app — fix the root cause rather than retrying until it happens to pass.
