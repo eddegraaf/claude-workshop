@@ -16,32 +16,22 @@ const USERS_ENDPOINT = 'users';
  */
 export class GoRestUser {
   private readonly request: APIRequestContext;
-  private readonly headers: Record<string, string>;
 
   constructor(request: APIRequestContext) {
     this.request = request;
-
-    const token = process.env.GOREST_TOKEN;
-    if (!token) {
-      throw new Error(
-        'GOREST_TOKEN environment variable is required to call the GoRest API. ' +
-          'Copy .env.example to .env and set your GoRest access token.',
-      );
-    }
-    this.headers = { Authorization: `Bearer ${token}` };
   }
 
+  // GoRest's read endpoints (list/get) are public and need no token; only
+  // write operations (create/update/delete) require the bearer token.
   async list(): Promise<GoRestUserDto[]> {
-    const response = await this.request.get(USERS_ENDPOINT, {
-      headers: this.headers,
-    });
+    const response = await this.request.get(USERS_ENDPOINT);
     await this.expectStatus(response, 200);
     return response.json();
   }
 
   async create(payload: CreateGoRestUserPayload): Promise<GoRestUserDto> {
     const response = await this.request.post(USERS_ENDPOINT, {
-      headers: this.headers,
+      headers: this.authHeaders(),
       data: payload,
     });
     await this.expectStatus(response, 201);
@@ -49,16 +39,14 @@ export class GoRestUser {
   }
 
   async get(id: number): Promise<GoRestUserDto> {
-    const response = await this.request.get(`${USERS_ENDPOINT}/${id}`, {
-      headers: this.headers,
-    });
+    const response = await this.request.get(`${USERS_ENDPOINT}/${id}`);
     await this.expectStatus(response, 200);
     return response.json();
   }
 
   async update(id: number, payload: UpdateGoRestUserPayload): Promise<GoRestUserDto> {
     const response = await this.request.patch(`${USERS_ENDPOINT}/${id}`, {
-      headers: this.headers,
+      headers: this.authHeaders(),
       data: payload,
     });
     await this.expectStatus(response, 200);
@@ -67,16 +55,25 @@ export class GoRestUser {
 
   async delete(id: number): Promise<void> {
     const response = await this.request.delete(`${USERS_ENDPOINT}/${id}`, {
-      headers: this.headers,
+      headers: this.authHeaders(),
     });
     await this.expectStatus(response, 204);
   }
 
   async expectNotFound(id: number): Promise<void> {
-    const response = await this.request.get(`${USERS_ENDPOINT}/${id}`, {
-      headers: this.headers,
-    });
+    const response = await this.request.get(`${USERS_ENDPOINT}/${id}`);
     await this.expectStatus(response, 404);
+  }
+
+  private authHeaders(): Record<string, string> {
+    const token = process.env.GOREST_TOKEN;
+    if (!token) {
+      throw new Error(
+        'GOREST_TOKEN environment variable is required to create, update, or delete ' +
+          'GoRest users. Copy .env.example to .env and set your GoRest access token.',
+      );
+    }
+    return { Authorization: `Bearer ${token}` };
   }
 
   private async expectStatus(response: APIResponse, status: number): Promise<void> {
