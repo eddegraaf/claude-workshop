@@ -1,7 +1,6 @@
 import { test as setup } from '@playwright/test';
 import { LoginPage } from '../../pages/LoginPage.page';
-
-const STORAGE_STATE_PATH = 'playwright/.auth/user.json';
+import { STORAGE_STATE_PATH } from '../../fixtures/storageState';
 
 const { BEARSTORE_USERNAME: username, BEARSTORE_PASSWORD: password } = process.env;
 if (!username || !password) {
