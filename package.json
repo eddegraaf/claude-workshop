@@ -1,8 +1,8 @@
 {
   "name": "claude-workshop",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Playwright + TypeScript QA automation workshop project.",
+  "private": true,
   "scripts": {
     "test": "playwright test",
     "lint": "eslint .",
@@ -12,8 +12,6 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "type": "commonjs",
   "lint-staged": {
