@@ -3,7 +3,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 jobs:
   test:
     timeout-minutes: 60
@@ -19,6 +18,8 @@ jobs:
         run: npx playwright install --with-deps
       - name: Run Playwright tests
         run: npx playwright test
+        env:
+          GOREST_TOKEN: ${{ secrets.GOREST_TOKEN }}
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

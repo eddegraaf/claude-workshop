@@ -1,20 +1,45 @@
 ---
 name: pr-review
-description: Reviews changed or staged Playwright TypeScript files against this project's CLAUDE.md rules (TypeScript only, no absolute XPath, Page Object Model enforcement) and reports violations. Use when the user asks to review a PR, review changes, or check compliance before committing/pushing.
+description: Reviews changed or staged files in a PR against this project's CLAUDE.md rules (TypeScript only, locator priority, Page Object Model, API-layer conventions), scans for hardcoded secrets, flags over-engineering, and confirms the pre-push flakiness check was run. Use when the user asks to review a PR, review changes, or check compliance before committing/pushing.
 ---
 
-# PR / Change Review Against CLAUDE.md
+# PR / Change Review
 
-Checks the current diff (or a specified PR) against this repository's [CLAUDE.md](../../../CLAUDE.md) rules and reports findings — does not auto-fix unless asked.
+Checks the current diff (or a specified PR) against this repository's [CLAUDE.md](../../../CLAUDE.md) rules and the conventions the existing suite already follows (Page Object Model for UI, the `api/*.api.ts` wrapper pattern for API calls). Folds in the checklists from the other project skills so one pass covers style, architecture, and security. Reports findings — does not auto-fix unless asked.
 
 ## Steps
 
-1. Get the scope: `git diff` / `git diff --staged` for local changes, or fetch the PR's changed files via the GitHub MCP server (`pull_request_read` / diff tools) if a PR number/URL is given.
-2. For each changed file under `tests/**` or `pages/**`, check:
-   - **Language**: file extension is `.ts`, not `.js`/`.jsx`. No untyped `any` used for data shared across tests.
-   - **Locators**: no absolute XPath (`/html/body/...` or any `xpath=` starting with `/` at the root). Flag any `page.locator('xpath=...')` unless it is a scoped/relative XPath with an explanatory comment justifying why no other locator strategy works.
-   - **POM boundary**: spec files (`tests/**/*.spec.ts`) must not call `page.locator(...)` or `page.getByX(...)` directly, except when instantiating a Page Object. Any raw locator usage in a spec is a violation.
-   - **POM structure**: new page/component interactions must live in a Page Object under `pages/`, exposing intention-revealing methods rather than raw locator getters.
-3. Produce a findings list, each with: file path + line, rule violated, and a one-line suggested fix. Group by severity (blocking vs. minor).
-4. If nothing violates the rules, say so explicitly rather than staying silent.
-5. Only apply fixes if the user asks for them after seeing the findings.
+1. **Scope**: `git diff` / `git diff --staged` for local changes, or fetch the PR's changed files via the GitHub MCP server (`pull_request_read`) if a PR number/URL is given. Group changed files by area: `tests/ui/**`, `tests/api/**`, `pages/**`, `api/**`, `types/**`.
+
+2. **Language & typing** (every changed `.ts` file):
+   - File extension is `.ts`, never `.js`/`.jsx`.
+   - No untyped `any` for data shared across tests (fixtures, DTOs, config) — flag missing interfaces/types.
+   - New request/response or fixture shapes belong in `types/**`, not inlined ad hoc.
+
+3. **UI locators & POM** (`tests/ui/**`, `pages/**`):
+   - No absolute XPath (`/html/body/...`). A scoped/relative XPath is only acceptable with a comment explaining why no other locator strategy works.
+   - Locator priority: `getByRole` > `getByLabel`/`getByPlaceholder` > `getByText` > `getByTestId`.
+   - Spec files (`tests/**/*.spec.ts`) must not call `page.locator(...)`/`page.getByX(...)` directly, except when instantiating a Page Object.
+   - New page/component interactions live in a Page Object under `pages/`, exposing intention-revealing methods (e.g. `login(username, password)`), not raw locator getters.
+
+4. **API layer** (`tests/api/**`, `api/**`):
+   - Specs use the `request` fixture, never `page`, and never go through a Page Object.
+   - Raw `request.get/post/patch/delete` calls belong inside a class under `api/` (mirroring [api/GoRestUser.api.ts](../../../api/GoRestUser.api.ts)) with intention-revealing methods (e.g. `create`, `expectNotFound`); spec files call those methods, not `request.*` directly.
+   - Status-code assertions live inside the API class, not scattered across specs.
+   - If an endpoint requires auth for writes, confirm both the authorized path and an explicit unauthorized/rejection path are tested.
+   - If schema validation is introduced, follow the `api-contract-testing` skill's convention (types in `types/api/<resource>.ts`, schemas under `tests/api/schemas/`, status asserted before body).
+
+5. **Secrets** — apply the [no-secrets-in-code](../no-secrets-in-code/SKILL.md) checklist: no hardcoded credentials/tokens/API keys; secrets flow through `process.env.*` sourced from a gitignored `.env`; flag any `.env`-like file staged for commit. Never echo a discovered secret value back in full.
+
+6. **Accessibility specs**, if any changed under `tests/a11y/**`: reuse existing Page Objects to reach state (no duplicated navigation logic), per the `accessibility-audit` skill.
+
+7. **Over-engineering**: flag additions that exceed what the change actually needs —
+   - A new abstraction, helper, config option, or base class backing only one caller or one test.
+   - Generic/parameterized solutions built for hypothetical future cases the PR doesn't exercise.
+   - Extra error handling, fallbacks, retries, or validation for conditions that can't occur here (e.g. guarding internal test helpers against inputs no caller ever passes).
+   - Unused exports, unused parameters, or scaffolding left over from an approach that was later simplified.
+   - Ask "would three similar lines have been simpler than this abstraction?" — if yes, flag it.
+
+8. **Pre-push flakiness check**: per CLAUDE.md's "Before Pushing" rule, the new or modified spec file(s) — not the full suite — must be run at least 3× (e.g. `npx playwright test tests/api/goRestUser.spec.ts --repeat-each=3`) with every run green before this change is pushed. If the user hasn't stated this was done, ask them to run it (or run it yourself, scoped to the changed spec files) rather than approving on a single green run — treat any inconsistent run as a real defect to fix, not something to retry past.
+
+9. **Report**: findings list, each with file path + line, rule violated, and a one-line suggested fix. Group by severity (blocking vs. minor). If nothing violates the rules, say so explicitly rather than staying silent. Only apply fixes if the user asks for them after seeing the findings.
