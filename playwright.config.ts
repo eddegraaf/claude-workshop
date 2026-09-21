@@ -35,16 +35,6 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      // Logs into BearStore and saves storageState to playwright/.auth/user.json.
-      // Standalone for now — no project depends on it yet, so it doesn't affect
-      // the existing (anonymous) UI tests. Run explicitly: `npx playwright test --project=setup`.
-      // Requires BEARSTORE_USERNAME/BEARSTORE_PASSWORD; see .env.example.
-      name: 'setup',
-      testDir: './tests/ui',
-      testMatch: /.*\.setup\.ts/,
-    },
-
-    {
       name: 'chromium',
       testDir: './tests/ui',
       use: { ...devices['Desktop Chrome'] },

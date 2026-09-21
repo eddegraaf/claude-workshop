@@ -17,9 +17,7 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run Playwright tests
-        # Excludes the `setup` project: it requires BEARSTORE_USERNAME/BEARSTORE_PASSWORD,
-        # which aren't configured as CI secrets yet, and nothing currently depends on it.
-        run: npx playwright test --project=chromium --project=firefox --project=webkit --project=api
+        run: npx playwright test
         env:
           GOREST_TOKEN: ${{ secrets.GOREST_TOKEN }}
       - uses: actions/upload-artifact@v4
