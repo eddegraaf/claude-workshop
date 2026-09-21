@@ -1,9 +1,9 @@
 ---
-name: test-scaffold-generator
+name: add-test
 description: Generates a Playwright TypeScript spec file plus a matching Page Object class skeleton for a given page or user flow, following this project's POM and locator rules. Use when the user asks to create a new test, scaffold a test for a page/flow, or add a Page Object.
 ---
 
-# Test Scaffold Generator
+# Add Test
 
 Scaffolds a new test + Page Object pair that complies with this repository's [CLAUDE.md](../../../CLAUDE.md) rules.
 

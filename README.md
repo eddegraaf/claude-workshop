@@ -7,6 +7,7 @@ Playwright + TypeScript QA automation workshop project. Project rules (TypeScrip
 ```bash
 npm install
 npx playwright install --with-deps
+cp .env.example .env   # then set GOREST_TOKEN, required for the `api` project
 ```
 
 ## Scripts
