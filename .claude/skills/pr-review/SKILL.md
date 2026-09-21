@@ -9,7 +9,7 @@ Checks the current diff (or a specified PR) against this repository's [CLAUDE.md
 
 ## Steps
 
-1. **Scope**: `git diff` / `git diff --staged` for local changes, or fetch the PR's changed files via the GitHub MCP server (`pull_request_read`) if a PR number/URL is given. Group changed files by area: `tests/ui/**`, `tests/api/**`, `pages/**`, `api/**`, `types/**`.
+1. **Scope**: `git diff` / `git diff --staged` for local changes, or fetch the PR's changed files via the GitHub MCP server (`pull_request_read`) if a PR number/URL is given. Group changed files by area: `tests/ui/**`, `tests/api/**`, `pages/**`, `api/**`, `types/**`, `fixtures/**`.
 
 2. **Language & typing** (every changed `.ts` file):
    - File extension is `.ts`, never `.js`/`.jsx`.
@@ -29,17 +29,22 @@ Checks the current diff (or a specified PR) against this repository's [CLAUDE.md
    - If an endpoint requires auth for writes, confirm both the authorized path and an explicit unauthorized/rejection path are tested.
    - If schema validation is introduced, follow the `api-contract-testing` skill's convention (types in `types/api/<resource>.ts`, schemas under `tests/api/schemas/`, status asserted before body).
 
-5. **Secrets** — apply the [no-secrets-in-code](../no-secrets-in-code/SKILL.md) checklist: no hardcoded credentials/tokens/API keys; secrets flow through `process.env.*` sourced from a gitignored `.env`; flag any `.env`-like file staged for commit. Never echo a discovered secret value back in full.
+5. **Fixtures & authentication** (`fixtures/**`):
+   - Tests needing a logged-in session use the shared `authenticatedPage` fixture (`fixtures/auth.fixture.ts`), not a per-test/per-file reimplementation of login.
+   - New shared fixtures follow the same worker-scoped pattern (once per worker, hand each test its own `page`) rather than reintroducing a separate Playwright "setup project" writing `storageState` to disk — see CLAUDE.md's "Authentication" section.
+   - Flag any change that reintroduces a single shared/fixed test account for a state-mutating flow (cart, orders, etc.) instead of a fresh account per worker — that's the exact pattern that caused real flaky failures here (concurrent workers corrupting each other's cart).
 
-6. **Accessibility specs**, if any changed under `tests/a11y/**`: reuse existing Page Objects to reach state (no duplicated navigation logic), per the `accessibility-audit` skill.
+6. **Secrets** — apply the [no-secrets-in-code](../no-secrets-in-code/SKILL.md) checklist: real service credentials (API tokens, keys) must never be hardcoded and must flow through `process.env.*` sourced from a gitignored `.env`; flag any `.env`-like file staged for commit. Per CLAUDE.md's "Test Credentials & Secrets" rule, credentials for a shared public demo/test account with no real access behind them (e.g. the BearStore login) are not secrets and are expected as plaintext — don't flag those. Never echo a discovered real secret value back in full.
 
-7. **Over-engineering**: flag additions that exceed what the change actually needs —
+7. **Accessibility specs**, if any changed under `tests/a11y/**`: reuse existing Page Objects to reach state (no duplicated navigation logic), per the `accessibility-audit` skill.
+
+8. **Over-engineering**: flag additions that exceed what the change actually needs —
    - A new abstraction, helper, config option, or base class backing only one caller or one test.
    - Generic/parameterized solutions built for hypothetical future cases the PR doesn't exercise.
    - Extra error handling, fallbacks, retries, or validation for conditions that can't occur here (e.g. guarding internal test helpers against inputs no caller ever passes).
    - Unused exports, unused parameters, or scaffolding left over from an approach that was later simplified.
    - Ask "would three similar lines have been simpler than this abstraction?" — if yes, flag it.
 
-8. **Pre-push flakiness check**: per CLAUDE.md's "Before Pushing" rule, the new or modified spec file(s) — not the full suite — must be run at least 3× (e.g. `npx playwright test tests/api/goRestUser.spec.ts --repeat-each=3`) with every run green before this change is pushed. If the user hasn't stated this was done, ask them to run it (or run it yourself, scoped to the changed spec files) rather than approving on a single green run — treat any inconsistent run as a real defect to fix, not something to retry past.
+9. **Pre-push flakiness check**: per CLAUDE.md's "Before Pushing" rule, the new or modified spec file(s) — not the full suite — must be run at least 3× (e.g. `npx playwright test tests/api/goRestUser.spec.ts --repeat-each=3`) with every run green before this change is pushed. If the user hasn't stated this was done, ask them to run it (or run it yourself, scoped to the changed spec files) rather than approving on a single green run — treat any inconsistent run as a real defect to fix, not something to retry past.
 
-9. **Report**: findings list, each with file path + line, rule violated, and a one-line suggested fix. Group by severity (blocking vs. minor). If nothing violates the rules, say so explicitly rather than staying silent. Only apply fixes if the user asks for them after seeing the findings.
+10. **Report**: findings list, each with file path + line, rule violated, and a one-line suggested fix. Group by severity (blocking vs. minor). If nothing violates the rules, say so explicitly rather than staying silent. Only apply fixes if the user asks for them after seeing the findings.
