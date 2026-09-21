@@ -10,3 +10,6 @@ node_modules/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Local secrets (e.g. GOREST_TOKEN)
+.env

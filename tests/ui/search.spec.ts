@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { SearchPage } from '../pages/SearchPage.page';
+import { SearchPage } from '../../pages/SearchPage.page';
 
 test('search item', async ({ page }) => {
   /**
