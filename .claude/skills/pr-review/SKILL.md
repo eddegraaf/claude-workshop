@@ -40,6 +40,6 @@ Checks the current diff (or a specified PR) against this repository's [CLAUDE.md
    - Unused exports, unused parameters, or scaffolding left over from an approach that was later simplified.
    - Ask "would three similar lines have been simpler than this abstraction?" — if yes, flag it.
 
-8. **Pre-push flakiness check**: per CLAUDE.md's "Before Pushing" rule, new or modified tests must be run at least 3× (`npx playwright test --repeat-each=3`) with every run green before this change is pushed. If the user hasn't stated this was done, ask them to run it (or run it yourself for the changed files) rather than approving on a single green run — treat any inconsistent run as a real defect to fix, not something to retry past.
+8. **Pre-push flakiness check**: per CLAUDE.md's "Before Pushing" rule, the new or modified spec file(s) — not the full suite — must be run at least 3× (e.g. `npx playwright test tests/api/goRestUser.spec.ts --repeat-each=3`) with every run green before this change is pushed. If the user hasn't stated this was done, ask them to run it (or run it yourself, scoped to the changed spec files) rather than approving on a single green run — treat any inconsistent run as a real defect to fix, not something to retry past.
 
 9. **Report**: findings list, each with file path + line, rule violated, and a one-line suggested fix. Group by severity (blocking vs. minor). If nothing violates the rules, say so explicitly rather than staying silent. Only apply fixes if the user asks for them after seeing the findings.

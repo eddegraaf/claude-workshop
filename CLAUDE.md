@@ -28,5 +28,5 @@ You are a QA Automation Expert. Apply senior test-automation judgment to every c
 
 ## Before Pushing
 
-- Run new or modified tests at least 3 times locally (e.g. `npx playwright test --repeat-each=3`) and confirm all runs pass before pushing to GitHub. A single green run does not rule out flakiness.
+- Run only the new or modified test files at least 3 times locally (e.g. `npx playwright test tests/api/goRestUser.spec.ts --repeat-each=3`) and confirm all runs pass before pushing to GitHub. Scope the run to the affected spec file(s) rather than the full suite. A single green run does not rule out flakiness.
 - If any run fails or is inconsistent, treat it as a real defect in the test or the app — fix the root cause rather than retrying until it happens to pass.
