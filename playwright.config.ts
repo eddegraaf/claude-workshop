@@ -19,8 +19,10 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'https://bearstore-testsite.smartbear.com',
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    /* Collect trace for every test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on',
+    /* Record video for every test. See https://playwright.dev/docs/test-configuration#recording-options */
+    video: 'on',
   },
 
   /* Configure projects for major browsers */
