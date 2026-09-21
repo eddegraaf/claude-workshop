@@ -21,6 +21,12 @@ module.exports = tseslint.config(
     plugins: { playwright },
     rules: {
       ...playwright.configs['flat/recommended'].rules,
+      // Assertions live inside Page Object methods (e.g. `expectNoResults`) per this
+      // project's POM rule, not inline in the test body — recognize that convention.
+      'playwright/expect-expect': [
+        'warn',
+        { assertFunctionNames: ['expect'], assertFunctionPatterns: ['^expect'] },
+      ],
     },
   },
   {
