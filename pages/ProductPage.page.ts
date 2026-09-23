@@ -32,4 +32,19 @@ export class ProductPage extends BasePage {
     await added;
     await this.page.waitForLoadState('networkidle');
   }
+
+  // SmartStore's swatch-style attributes (Color, Leather color, etc.) render as a native
+  // radio input with `display:none` wrapped in a visible <label>; the option's only
+  // accessible name is a `title` attribute on a nested span. getByRole can't reach it (the
+  // input isn't visible/actionable), getByLabel resolves to that same hidden input, and
+  // getByText doesn't match since `title` isn't rendered text — so none of this project's
+  // blessed locator strategies can express it. Scoped (not absolute) XPath: start from the
+  // attribute's own label found by text, then walk up to its group and down to the swatch by
+  // title; clicking the visible label toggles the wrapped input natively.
+  async selectAttributeOption(attributeLabel: string, optionName: string): Promise<void> {
+    const swatch = this.page
+      .getByText(attributeLabel, { exact: true })
+      .locator(`xpath=..//label[.//*[@title="${optionName}"]]`);
+    await swatch.click();
+  }
 }
