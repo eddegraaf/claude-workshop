@@ -4,6 +4,7 @@ import { BasePage } from './BasePage.page';
 export class CartPage extends BasePage {
   private readonly removeLineLinks: Locator;
   private readonly totalCell: Locator;
+  private readonly checkoutButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -15,6 +16,7 @@ export class CartPage extends BasePage {
       .filter({ has: page.getByRole('cell', { name: 'Total:', exact: true }) })
       .getByRole('cell')
       .nth(1);
+    this.checkoutButton = page.getByRole('button', { name: 'Checkout' });
   }
 
   async goto(): Promise<void> {
@@ -43,11 +45,30 @@ export class CartPage extends BasePage {
     await expect(this.removeLineLinks).toHaveCount(0);
   }
 
+  // .first() rather than a bare strict-mode locator: the same product can appear as multiple
+  // cart lines (e.g. two different variants of one product), so more than one matching link
+  // can legitimately exist — this only asserts at least one is visible.
   async expectContainsProduct(productName: string): Promise<void> {
-    await expect(this.page.getByRole('link', { name: productName, exact: true })).toBeVisible();
+    await expect(
+      this.page.getByRole('link', { name: productName, exact: true }).first(),
+    ).toBeVisible();
   }
 
   async expectTotal(expected: string): Promise<void> {
     await expect(this.totalCell).toHaveText(expected);
+  }
+
+  // The visible "Checkout" button's onclick runs `$('#startcheckout').trigger('click')`,
+  // delegating to a hidden jQuery-triggered form submit rather than navigating directly.
+  // BasePage.navigate() only waits for `domcontentloaded`, so if jQuery hasn't finished
+  // loading yet, that call silently does nothing — the click "succeeds" but nothing happens,
+  // which otherwise surfaced as a hang on whatever the caller waits for next.
+  async checkout(): Promise<void> {
+    // Passed as a string, not a closure: this file's tsconfig has no DOM lib, so a typed
+    // arrow function referencing `window` (valid in the browser context this runs in) would
+    // fail to compile here.
+    await this.page.waitForFunction("'jQuery' in window");
+    await this.checkoutButton.click();
+    await this.page.waitForURL(/\/checkout\/billingaddress/);
   }
 }
